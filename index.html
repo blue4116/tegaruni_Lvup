@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>軽作業レベルアップ</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="header">
+  <h1>🌟 軽作業レベルアップ</h1>
+  <button id="resetBtn" class="sub-btn">データ初期化</button>
+</header>
+
+<main class="container">
+  <section class="hero card">
+    <p class="label">総合レベル</p>
+    <div class="level-row">
+      <span id="totalLevel">Lv.1</span>
+      <strong id="totalExp">0 EXP</strong>
+    </div>
+    <div class="bar"><span id="totalBar"></span></div>
+    <p id="totalNext">次のレベルまで 100 EXP</p>
+  </section>
+
+  <section class="card">
+    <div class="section-title">
+      <h2>🛠️ 使うソフトを選択</h2>
+      <button id="addSoftwareBtn" class="small-btn">＋ソフト追加</button>
+    </div>
+    <div id="softwareList" class="software-grid"></div>
+  </section>
+
+  <section class="card">
+    <h2>📝 作業を記録</h2>
+    <form id="workForm">
+      <label>分野
+        <select id="category" required>
+          <option value="軽作業">📦 軽作業</option>
+          <option value="イラスト">🎨 イラスト</option>
+          <option value="デザイン">🖼️ デザイン</option>
+          <option value="PC作業">💻 PC作業</option>
+          <option value="その他">✨ その他</option>
+        </select>
+      </label>
+      <label>使用ソフト
+        <select id="software" required></select>
+      </label>
+      <label>作業内容
+        <input id="workName" type="text" placeholder="例：イラストの色塗り" required>
+      </label>
+      <div class="two">
+        <label>作業時間（分）
+          <input id="minutes" type="number" min="0" value="30">
+        </label>
+        <label>難易度
+          <select id="difficulty">
+            <option value="1">★ やさしい</option>
+            <option value="2" selected>★★ 普通</option>
+            <option value="3">★★★ 難しい</option>
+            <option value="4">★★★★ とても難しい</option>
+          </select>
+        </label>
+      </div>
+      <button class="main-btn" type="submit">✨ 作業を記録してEXP獲得</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>🏆 実績・称号</h2>
+    <div id="achievementList" class="achievement-grid"></div>
+  </section>
+
+  <section class="card">
+    <h2>📈 成長グラフ</h2>
+    <canvas id="growthChart" height="180"></canvas>
+  </section>
+
+  <section class="card">
+    <h2>📈 スキル成長</h2>
+    <div id="skillList"></div>
+  </section>
+
+  <section class="card">
+    <h2>📊 成長記録</h2>
+    <div class="stats">
+      <div><span>記録件数</span><strong id="workCount">0</strong></div>
+      <div><span>合計作業時間</span><strong id="totalMinutes">0分</strong></div>
+      <div><span>獲得EXP</span><strong id="earnedExp">0</strong></div>
+    </div>
+    <div id="history"></div>
+  </section>
+</main>
+
+<script src="script.js"></script>
+</body>
+</html>
