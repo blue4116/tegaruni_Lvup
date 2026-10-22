@@ -19,3 +19,30 @@ label{display:block;font-weight:700;margin:12px 0}input,select{display:block;wid
 .achievement{border:1px solid var(--line);border-radius:12px;padding:14px;background:#fcfbf8}
 .achievement.locked{opacity:.45}.achievement strong{display:block;margin-bottom:5px}.achievement small{color:#777}
 canvas{width:100%;display:block}
+
+.title-badge{display:inline-block;margin-left:6px;padding:3px 8px;border-radius:99px;background:#f0ece3;font-size:.75rem;font-weight:700}
+
+.modal{position:fixed;inset:0;background:rgba(30,35,30,.55);display:flex;align-items:center;justify-content:center;z-index:100}
+.modal.hidden{display:none}.modal-box{width:min(420px,90%);background:#fff;border-radius:22px;padding:30px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.25);animation:pop .35s ease}
+.levelup-icon{font-size:4rem;animation:bounce .8s infinite alternate}.modal-box h2{font-size:2rem;color:var(--main);margin:5px 0 10px}
+.level-history-item{padding:12px 0;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:10px}.level-history-item strong{color:var(--main)}
+@keyframes pop{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes bounce{to{transform:translateY(-8px)}}
+
+.goal{border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:12px;background:#fcfbf8}
+.goal-top{display:flex;justify-content:space-between;gap:10px}.goal-name{font-weight:800}.goal-count{color:var(--main);font-weight:800}
+.goal-bar{height:10px;background:#e8e5dc;border-radius:99px;overflow:hidden;margin:10px 0}.goal-bar span{display:block;height:100%;background:var(--accent);border-radius:99px}
+.goal small{color:#777}
+
+.hidden{display:none !important}
+.auth-wrap{display:flex;justify-content:center;padding:24px 14px}
+.auth-card{width:100%;max-width:420px}
+.auth-card h1{font-size:22px;margin:0 0 6px}
+.auth-card label{display:block;margin-bottom:12px}
+.auth-card input{width:100%;box-sizing:border-box}
+.auth-message{min-height:1.4em;color:#b3402f;font-weight:bold}
+.auth-links{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.link-btn{background:none;border:none;color:#2f5d8a;text-decoration:underline;font-size:15px;padding:10px;cursor:pointer;text-align:left}
+.header-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.user-email{font-size:12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.save-status{font-size:12px;opacity:.8}
