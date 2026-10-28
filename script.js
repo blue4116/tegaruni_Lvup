@@ -3,14 +3,16 @@ import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWith
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, serverTimestamp }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
 import { firebaseConfig } from "./firebase-config.js";
 
 const configured = firebaseConfig && firebaseConfig.apiKey && !firebaseConfig.apiKey.startsWith("ここに");
-let auth = null, db = null;
+let auth = null, db = null, functions = null, processRates = {};
 if(configured){
   const fbApp = initializeApp(firebaseConfig);
   auth = getAuth(fbApp);
   db = getFirestore(fbApp);
+  functions = getFunctions(fbApp);
 }
 
 const workPresets = {
@@ -116,6 +118,7 @@ document.getElementById("category").addEventListener("change",updateWorkPresets)
 document.getElementById("workPreset").addEventListener("change",()=>{
   const v=document.getElementById("workPreset").value;
   if(v) document.getElementById("workName").value=v;
+  updateSelectedRate();
 });
 function renderSkills(){
   const el=document.getElementById("skillList");
@@ -216,8 +219,9 @@ function render(){
   document.getElementById("workCount").textContent=data.history.length;
   document.getElementById("totalMinutes").textContent=minutes>=60?`${Math.floor(minutes/60)}時間${minutes%60}分`:`${minutes}分`;
   document.getElementById("earnedExp").textContent=total;
+  document.getElementById("totalWage").textContent=`${data.history.reduce((a,x)=>a+(Number(x.wageYen)||0),0).toLocaleString("ja-JP")}円`;
   document.getElementById("history").innerHTML=data.history.slice().reverse().map(x=>
-    `<div class="history-item"><div><b>${escapeHtml(x.name)}</b><br><small>${escapeHtml(x.category)}・${escapeHtml(x.software)}・${x.date}</small></div><span class="exp">+${x.exp+(x.bonus||0)} EXP${x.bonus?`<br><small>🎯 目標ボーナス+${x.bonus}</small>`:""}</span></div>`
+    `<div class="history-item"><div><b>${escapeHtml(x.name)}</b><br><small>${escapeHtml(x.category)}・${escapeHtml(x.software)}・${x.date}<br>${Number(x.unitPriceYen||0)}円 × ${Number(x.quantity||1)}個 = ${Number(x.wageYen||0).toLocaleString("ja-JP")}円</small></div><span class="exp">+${x.exp+(x.bonus||0)} EXP${x.bonus?`<br><small>🎯 目標ボーナス+${x.bonus}</small>`:""}</span></div>`
   ).join("") || "<p>まだ記録がありません。</p>";
   renderSoftware();renderSkills();renderAchievements();drawGrowthChart();renderLevelHistory();renderGoals();renderGoalSelect();
 }
@@ -231,6 +235,8 @@ document.getElementById("workForm").addEventListener("submit",e=>{
   const name=document.getElementById("workName").value.trim() || document.getElementById("workPreset").value;
   if(!name){alert("作業内容を選択するか、自由入力してください。");return;}
   const minutes=Number(document.getElementById("minutes").value)||0;
+  const quantity=Math.max(1,Number(document.getElementById("quantity").value)||1);
+  const unitPriceYen=Math.max(0,Math.floor(Number(document.getElementById("unitPrice").value)||0));
   const difficulty=Number(document.getElementById("difficulty").value);
   const preset=document.getElementById("workPreset").selectedOptions[0];
   const baseExp=preset && preset.value ? Number(preset.dataset.exp||10) : 10;
@@ -242,7 +248,7 @@ document.getElementById("workForm").addEventListener("submit",e=>{
   data.skills[software].exp+=exp;
   data.skills[software].uses++;
   data.skills[software].minutes+=minutes;
-  const record={name,category,software,minutes,exp,date:new Date().toLocaleString("ja-JP")};
+  const record={name,category,software,minutes,exp,quantity,unitPriceYen,wageYen:quantity*unitPriceYen,date:new Date().toLocaleString("ja-JP")};
   if(goal){record.goalId=goal.id;record.periodKey=pKey;}
   data.history.push(record);
   // 目標を今回の記録で達成したら、その期間に1回だけボーナスEXP
@@ -375,11 +381,52 @@ async function loadUserData(user){
     await flushSave();
   }
   normalize(); ensureSkills();
+  await loadProcessRates();
   document.getElementById("userEmail").textContent = user.email;
   updateWorkPresets();
   render();
+  if(!document.getElementById("adminToggle").classList.contains("hidden")) renderAdmin();
   setSaveStatus("保存済み ✓");
 }
+
+function rateKey(category,name){return `${category}::${name}`;}
+async function loadProcessRates(){
+  try{const snap=await getDoc(doc(db,"settings","processRates"));processRates=snap.exists()?(snap.data().rates||{}):{};}
+  catch(e){processRates={};console.warn("工程単価の読み込みに失敗しました",e);}
+  renderRates(); updateSelectedRate();
+}
+function updateSelectedRate(){
+  const category=document.getElementById("category")?.value;
+  const name=document.getElementById("workName")?.value.trim()||document.getElementById("workPreset")?.value;
+  const input=document.getElementById("unitPrice"); if(input && category && name) input.value=processRates[rateKey(category,name)]??0;
+}
+function renderRates(){
+  const el=document.getElementById("rateList"); if(!el)return;
+  el.innerHTML=Object.entries(processRates).map(([k,v])=>`<div class="admin-row">${escapeHtml(k.replace("::"," / "))}<b>${Number(v).toLocaleString("ja-JP")}円</b></div>`).join("")||"<p>工程単価はまだ設定されていません。</p>";
+}
+async function renderAdmin(){
+  const list=document.getElementById("adminUsers"); list.textContent="利用者情報を読み込み中…";
+  try{
+    const result=await httpsCallable(functions,"getAdminOverview")();
+    list.innerHTML=`<form id="adminAddForm" class="two"><label>管理者にする利用者のメールアドレス<input id="adminEmail" type="email" required></label><button class="main-btn" type="submit">管理者に追加</button></form>`+
+      result.data.users.map(u=>`<div class="admin-row"><span>${escapeHtml(u.email||u.uid)}<small>工賃合計 ${Number(u.wageYen||0).toLocaleString("ja-JP")}円</small></span><span>${u.admin?"管理者":"利用者"}${u.email?` <button type="button" class="small-btn" data-email="${escapeHtml(u.email)}" data-enabled="${u.admin?"false":"true"}">${u.admin?"管理者解除":"管理者にする"}</button>`:""}</span></div>`).join("")||"<p>利用者はいません。</p>`;
+    list.querySelector("#adminAddForm").addEventListener("submit",async e=>{e.preventDefault(); await setAdminByEmail(document.getElementById("adminEmail").value,true);});
+    list.querySelectorAll("button[data-email]").forEach(b=>b.addEventListener("click",()=>setAdminByEmail(b.dataset.email,b.dataset.enabled==="true")));
+  }catch(e){list.textContent="管理者情報を取得できませんでした。Cloud Functionsの公開と管理者設定を確認してください。";console.error(e);}
+}
+async function setAdminByEmail(email,enabled){
+  try{await httpsCallable(functions,"setAdminRole")({email,enabled});await renderAdmin();}
+  catch(e){alert("管理者の変更に失敗しました。入力したメールアドレスと設定を確認してください。");console.error(e);}
+}
+document.getElementById("adminToggle").addEventListener("click",()=>{const p=document.getElementById("adminPanel");p.classList.toggle("hidden");if(!p.classList.contains("hidden"))renderAdmin();});
+document.getElementById("rateForm").addEventListener("submit",async e=>{
+  e.preventDefault();const key=rateKey(document.getElementById("rateCategory").value.trim(),document.getElementById("rateName").value.trim());
+  processRates[key]=Math.floor(Number(document.getElementById("rateYen").value));
+  try{await setDoc(doc(db,"settings","processRates"),{rates:processRates,updatedAt:serverTimestamp()});renderRates();updateSelectedRate();e.target.reset();}
+  catch(err){alert("単価を保存できませんでした。管理者権限を確認してください。");console.error(err);}
+});
+document.getElementById("category").addEventListener("change",updateSelectedRate);
+document.getElementById("workName").addEventListener("input",updateSelectedRate);
 
 if(!configured){
   authMessage.textContent = "firebase-config.js に Firebase の設定を入力してください（README参照）。";
@@ -389,11 +436,15 @@ if(!configured){
     if(user){
       authView.classList.add("hidden");
       appView.classList.remove("hidden");
+      try{const adminSnap=await getDoc(doc(db,"admins",user.uid));document.getElementById("adminToggle").classList.toggle("hidden",!adminSnap.exists());}
+      catch(_){document.getElementById("adminToggle").classList.add("hidden");}
       await loadUserData(user);
     }else{
       // ログアウト時は画面上のデータを完全に消す（他のユーザーに見えないように）
       currentUser = null;
       data = newData();
+      document.getElementById("adminToggle").classList.add("hidden");
+      document.getElementById("adminPanel").classList.add("hidden");
       appView.classList.add("hidden");
       authView.classList.remove("hidden");
     }

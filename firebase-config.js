@@ -1,10 +1,10 @@
-// Firebaseコンソールで表示される設定値に書き換えてください（README参照）
-// ※ apiKey などは公開されても問題ない値です。データの保護は firestore.rules で行います。
+// Firebase Web SDK configuration. Paste your app's web config values here.
+// These client settings are not service-account credentials.
 export const firebaseConfig = {
-  apiKey: "ここにapiKey",
-  authDomain: "ここにauthDomain",
-  projectId: "ここにprojectId",
-  storageBucket: "ここにstorageBucket",
-  messagingSenderId: "ここにmessagingSenderId",
-  appId: "ここにappId"
+  apiKey: "ここにFirebaseのapiKey",
+  authDomain: "ここにFirebaseのauthDomain",
+  projectId: "ここにFirebaseのprojectId",
+  storageBucket: "ここにFirebaseのstorageBucket",
+  messagingSenderId: "ここにFirebaseのmessagingSenderId",
+  appId: "ここにFirebaseのappId"
 };

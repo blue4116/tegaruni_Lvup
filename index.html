@@ -36,6 +36,7 @@
     <small id="saveStatus" class="save-status" aria-live="polite"></small>
     <button id="logoutBtn" class="sub-btn">ログアウト</button>
     <button id="resetBtn" class="sub-btn">データ初期化</button>
+    <button id="adminToggle" class="sub-btn hidden" type="button">管理者メニュー</button>
   </div>
 </header>
 
@@ -97,6 +98,15 @@
         <label>作業時間（分）
           <input id="minutes" type="number" min="0" value="30">
         </label>
+      <div class="two">
+        <label>完了数量
+          <input id="quantity" type="number" min="1" value="1" required>
+        </label>
+        <label>工程単価（円）
+          <input id="unitPrice" type="number" min="0" step="1" value="0" readonly required>
+        </label>
+      </div>
+      <p class="wage-note">工賃 ＝ 工程単価 × 完了数量</p>
         <label>難易度
           <select id="difficulty">
             <option value="1">★ やさしい</option>
@@ -108,6 +118,20 @@
       </div>
       <button class="main-btn" type="submit">✨ 作業を記録してEXP獲得</button>
     </form>
+  </section>
+
+  <section id="adminPanel" class="card hidden">
+    <h2>👑 管理者メニュー</h2>
+    <p>利用者の記録・工賃を確認し、管理者を追加または解除できます。</p>
+    <div id="adminUsers"></div>
+    <h3>工程単価の設定</h3>
+    <form id="rateForm" class="two">
+      <label>分野<input id="rateCategory" required placeholder="例：軽作業"></label>
+      <label>工程名<input id="rateName" required placeholder="例：袋詰め"></label>
+      <label>単価（円）<input id="rateYen" type="number" min="0" step="1" required></label>
+      <button class="main-btn" type="submit">単価を保存</button>
+    </form>
+    <div id="rateList"></div>
   </section>
 
   <section class="card">
@@ -155,10 +179,11 @@
 
   <section class="card">
     <h2>📊 成長記録</h2>
-    <div class="stats">
+    <div class="stats stats-wage">
       <div><span>記録件数</span><strong id="workCount">0</strong></div>
       <div><span>合計作業時間</span><strong id="totalMinutes">0分</strong></div>
       <div><span>獲得EXP</span><strong id="earnedExp">0</strong></div>
+      <div><span>工賃合計</span><strong id="totalWage">0円</strong></div>
     </div>
     <div id="history"></div>
   </section>
